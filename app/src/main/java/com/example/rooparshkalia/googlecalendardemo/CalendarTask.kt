@@ -9,18 +9,27 @@ import com.google.api.client.extensions.android.http.AndroidHttp
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException
 import com.google.api.client.json.jackson2.JacksonFactory
-import com.google.api.client.util.DateTime
 import com.google.api.services.calendar.Calendar
 import com.google.api.services.calendar.model.Event
-import com.google.api.services.calendar.model.EventDateTime
+import com.google.api.services.calendar.model.Events
 import java.lang.ref.WeakReference
-import java.util.*
 
-class CalendarTask internal constructor(context: Context, credential: GoogleAccountCredential) : AsyncTask<Event, Unit, Unit>() {
+class CalendarTask internal constructor(context: Context, type: CalendarTaskType, credential: GoogleAccountCredential, event: Event) : AsyncTask<Event, Unit, Unit>() {
+
+    companion object {
+        private const val CALENDAR_ID = "primary"
+        private const val REQUEST_AUTHORISATION = 1002
+    }
 
     override fun doInBackground(vararg params: Event?) {
         try {
-            addEventToCalendar()
+            when (mType) {
+                CalendarTaskType.INSERT -> addEventToCalendar(mEvent)
+                CalendarTaskType.DELETE -> deleteEventFromCalendar("12")
+                CalendarTaskType.GET -> getEventFromCalendar("12")
+                CalendarTaskType.UPDATE -> updateEventToCalendar("12", Event())
+                CalendarTaskType.GET_ALL -> getAllEventsFromCalendar()
+            }
         } catch (e: Exception) {
             mLastError = e
             cancel(true)
@@ -35,40 +44,21 @@ class CalendarTask internal constructor(context: Context, credential: GoogleAcco
     private var mService: Calendar? = null
     private var mLastError: Exception? = null
     private var mContext: WeakReference<Context>? = null
+    private var mType: CalendarTaskType? = null
+    private var mEvent: Event? = null
 
-    companion object {
-        private const val CALENDAR_ID = "primary"
-        private const val REQUEST_AUTHORISATION = 1002
-    }
 
     init {
         val transport = AndroidHttp.newCompatibleTransport()
         val jsonFactory = JacksonFactory.getDefaultInstance()
         mContext = WeakReference(context)
+        mType = type
+        mEvent = event
         mService = Calendar.Builder(transport, jsonFactory, credential)
                 .setApplicationName("Google Calendar Demo")
                 .build()
     }
 
-    private fun addEventToCalendar(): Event {
-
-        var event = Event().setSummary("Test Event")
-                .setLocation("Ludhiana")
-                .setDescription("First Event in Ludhiana")
-
-        val startDateTime = DateTime("2018-07-02T09:00:00Z")
-        val timeZone = java.util.Calendar.getInstance().timeZone.getDisplayName(false, TimeZone.SHORT)
-        val eventStartDateTime = EventDateTime().setDateTime(startDateTime).setTimeZone(timeZone)
-
-        val endDateTime = DateTime("2018-07-02T10:00:00Z")
-        val eventEndDateTime = EventDateTime().setDateTime(endDateTime).setTimeZone(timeZone)
-
-        event.start = eventStartDateTime
-        event.end = eventEndDateTime
-
-        event = mService?.events()?.insert(CALENDAR_ID, event)?.execute()
-        return event
-    }
 
     override fun onCancelled() {
         if (mLastError != null) {
@@ -81,4 +71,18 @@ class CalendarTask internal constructor(context: Context, credential: GoogleAcco
         }
     }
 
+    private fun addEventToCalendar(event: Event?): Event? = mService?.events()?.insert(CALENDAR_ID, event)?.execute()
+
+    private fun deleteEventFromCalendar(eventId: String) {
+        mService?.events()?.delete(CALENDAR_ID, eventId)?.execute()
+    }
+
+    private fun getEventFromCalendar(eventId: String): Event? = mService?.events()?.get(CALENDAR_ID, eventId)?.execute()
+
+    private fun getAllEventsFromCalendar(): Events? = mService?.events()?.list(CALENDAR_ID)?.execute()
+
+    private fun updateEventToCalendar(eventId: String, event: Event) {
+        mService?.events()?.update(CALENDAR_ID, eventId, event)?.execute()
+    }
 }
+

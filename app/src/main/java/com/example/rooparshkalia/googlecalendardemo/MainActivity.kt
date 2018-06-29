@@ -11,16 +11,21 @@ import android.view.View
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
+import com.google.api.client.util.DateTime
 import com.google.api.client.util.ExponentialBackOff
 import com.google.api.services.calendar.CalendarScopes
+import com.google.api.services.calendar.model.Event
+import com.google.api.services.calendar.model.EventDateTime
 import kotlinx.android.synthetic.main.activity_main.button
 import pub.devrel.easypermissions.AfterPermissionGranted
 import pub.devrel.easypermissions.EasyPermissions
+import java.util.*
 
 
 class MainActivity : Activity(), View.OnClickListener, EasyPermissions.PermissionCallbacks {
 
     private lateinit var mCredential: GoogleAccountCredential
+    private lateinit var event: Event
 
     companion object {
         private val CALENDAR_SCOPES = arrayListOf(CalendarScopes.CALENDAR)
@@ -38,6 +43,20 @@ class MainActivity : Activity(), View.OnClickListener, EasyPermissions.Permissio
         setContentView(R.layout.activity_main)
 
         mCredential = GoogleAccountCredential.usingOAuth2(this@MainActivity, CALENDAR_SCOPES).setBackOff(ExponentialBackOff())
+
+        event = Event().setSummary("Test Event")
+                .setLocation("Ludhiana")
+                .setDescription("First Event in Ludhiana")
+
+        val startDateTime = DateTime("2018-07-02T09:00:00Z")
+        val timeZone = java.util.Calendar.getInstance().timeZone.getDisplayName(false, TimeZone.SHORT)
+        val eventStartDateTime = EventDateTime().setDateTime(startDateTime).setTimeZone(timeZone)
+
+        val endDateTime = DateTime("2018-07-02T10:00:00Z")
+        val eventEndDateTime = EventDateTime().setDateTime(endDateTime).setTimeZone(timeZone)
+
+        event.start = eventStartDateTime
+        event.end = eventEndDateTime
 
         button.text = "Click me to add event"
         button.setOnClickListener(this)
@@ -110,9 +129,8 @@ class MainActivity : Activity(), View.OnClickListener, EasyPermissions.Permissio
 
     @AfterPermissionGranted(REQUEST_WRITE_CALENDAR)
     private fun checkCalendarAndWriteEvent() {
-
         if (EasyPermissions.hasPermissions(this@MainActivity, Manifest.permission.WRITE_CALENDAR)) {
-            CalendarTask(this, mCredential).execute()
+            CalendarTask(this, CalendarTaskType.INSERT, mCredential, event).execute()
         } else {
             EasyPermissions.requestPermissions(
                     this@MainActivity,
@@ -140,14 +158,11 @@ class MainActivity : Activity(), View.OnClickListener, EasyPermissions.Permissio
         super.onActivityResult(requestCode, resultCode, data)
 
         if (resultCode == RESULT_OK) {
-
             when (requestCode) {
-
                 REQUEST_ACCOUNT_PICKER_EVENT -> data?.let {
                     data.extras?.let { saveUserCredentials(data) }
                 }
-
-                REQUEST_AUTHORISATION -> CalendarTask(this, mCredential).execute()
+                REQUEST_AUTHORISATION -> CalendarTask(this, CalendarTaskType.INSERT, mCredential, event).execute()
             }
         }
     }
