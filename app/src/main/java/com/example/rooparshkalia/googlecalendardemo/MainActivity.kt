@@ -8,6 +8,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import com.example.rooparshkalia.googlecalendardemo.Constants.REQUEST_AUTHORISATION
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
@@ -16,7 +17,7 @@ import com.google.api.client.util.ExponentialBackOff
 import com.google.api.services.calendar.CalendarScopes
 import com.google.api.services.calendar.model.Event
 import com.google.api.services.calendar.model.EventDateTime
-import kotlinx.android.synthetic.main.activity_main.button
+import kotlinx.android.synthetic.main.activity_main.*
 import pub.devrel.easypermissions.AfterPermissionGranted
 import pub.devrel.easypermissions.EasyPermissions
 import java.util.*
@@ -31,7 +32,6 @@ class MainActivity : Activity(), View.OnClickListener, EasyPermissions.Permissio
         private val CALENDAR_SCOPES = arrayListOf(CalendarScopes.CALENDAR)
         private const val REQUEST_PERMISSION_ACCOUNT = 1000
         private const val REQUEST_ACCOUNT_PICKER_EVENT = 1001
-        private const val REQUEST_AUTHORISATION = 1002
         private const val REQUEST_WRITE_CALENDAR = 1003
         private const val REQUEST_GOOGLE_PLAY_SERVICES = 1004
         private const val PREF_ACCOUNT_NAME = "accountName"
@@ -60,6 +60,7 @@ class MainActivity : Activity(), View.OnClickListener, EasyPermissions.Permissio
 
         button.text = "Click me to add event"
         button.setOnClickListener(this)
+
     }
 
     override fun onClick(v: View?) {
@@ -130,7 +131,7 @@ class MainActivity : Activity(), View.OnClickListener, EasyPermissions.Permissio
     @AfterPermissionGranted(REQUEST_WRITE_CALENDAR)
     private fun checkCalendarAndWriteEvent() {
         if (EasyPermissions.hasPermissions(this@MainActivity, Manifest.permission.WRITE_CALENDAR)) {
-            CalendarTask(this, CalendarTaskType.INSERT, mCredential, event).execute()
+            CalendarTask(this, Constants.CalendarTaskType.INSERT, mCredential, event).execute()
         } else {
             EasyPermissions.requestPermissions(
                     this@MainActivity,
@@ -154,6 +155,7 @@ class MainActivity : Activity(), View.OnClickListener, EasyPermissions.Permissio
         EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this)
     }
 
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
@@ -162,7 +164,7 @@ class MainActivity : Activity(), View.OnClickListener, EasyPermissions.Permissio
                 REQUEST_ACCOUNT_PICKER_EVENT -> data?.let {
                     data.extras?.let { saveUserCredentials(data) }
                 }
-                REQUEST_AUTHORISATION -> CalendarTask(this, CalendarTaskType.INSERT, mCredential, event).execute()
+                REQUEST_AUTHORISATION -> CalendarTask(this, Constants.CalendarTaskType.INSERT, mCredential, event).execute()
             }
         }
     }

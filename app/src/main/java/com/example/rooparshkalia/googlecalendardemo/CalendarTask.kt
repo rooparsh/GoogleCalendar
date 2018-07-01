@@ -3,8 +3,9 @@ package com.example.rooparshkalia.googlecalendardemo
 import android.app.Activity
 import android.content.Context
 import android.os.AsyncTask
-import android.support.v4.app.ActivityCompat
 import android.util.Log
+import com.example.rooparshkalia.googlecalendardemo.Constants.CALENDAR_ID
+import com.example.rooparshkalia.googlecalendardemo.Constants.REQUEST_AUTHORISATION
 import com.google.api.client.extensions.android.http.AndroidHttp
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException
@@ -14,21 +15,20 @@ import com.google.api.services.calendar.model.Event
 import com.google.api.services.calendar.model.Events
 import java.lang.ref.WeakReference
 
-class CalendarTask internal constructor(context: Context, type: CalendarTaskType, credential: GoogleAccountCredential, event: Event) : AsyncTask<Event, Unit, Unit>() {
+class CalendarTask internal constructor(context: Context,
+                                        type: Constants.CalendarTaskType,
+                                        credential: GoogleAccountCredential,
+                                        event: Event) : AsyncTask<Event, Unit, Unit>() {
 
-    companion object {
-        private const val CALENDAR_ID = "primary"
-        private const val REQUEST_AUTHORISATION = 1002
-    }
 
     override fun doInBackground(vararg params: Event?) {
         try {
             when (mType) {
-                CalendarTaskType.INSERT -> addEventToCalendar(mEvent)
-                CalendarTaskType.DELETE -> deleteEventFromCalendar("12")
-                CalendarTaskType.GET -> getEventFromCalendar("12")
-                CalendarTaskType.UPDATE -> updateEventToCalendar("12", Event())
-                CalendarTaskType.GET_ALL -> getAllEventsFromCalendar()
+                Constants.CalendarTaskType.INSERT -> addEventToCalendar(mEvent)
+                Constants.CalendarTaskType.DELETE -> deleteEventFromCalendar("12")
+                Constants.CalendarTaskType.GET -> getEventFromCalendar("12")
+                Constants.CalendarTaskType.UPDATE -> updateEventToCalendar("12", mEvent)
+                Constants.CalendarTaskType.GET_ALL -> getAllEventsFromCalendar()
             }
         } catch (e: Exception) {
             mLastError = e
@@ -44,7 +44,7 @@ class CalendarTask internal constructor(context: Context, type: CalendarTaskType
     private var mService: Calendar? = null
     private var mLastError: Exception? = null
     private var mContext: WeakReference<Context>? = null
-    private var mType: CalendarTaskType? = null
+    private var mType: Constants.CalendarTaskType? = null
     private var mEvent: Event? = null
 
 
@@ -64,7 +64,7 @@ class CalendarTask internal constructor(context: Context, type: CalendarTaskType
         if (mLastError != null) {
             if (mLastError is UserRecoverableAuthIOException) {
                 val e = mLastError as UserRecoverableAuthIOException
-                ActivityCompat.startActivityForResult(mContext as Activity, e.intent, REQUEST_AUTHORISATION, null)
+                (mContext as Activity).startActivityForResult(e.intent, REQUEST_AUTHORISATION)
             } else {
                 mLastError!!.printStackTrace()
             }
@@ -81,7 +81,7 @@ class CalendarTask internal constructor(context: Context, type: CalendarTaskType
 
     private fun getAllEventsFromCalendar(): Events? = mService?.events()?.list(CALENDAR_ID)?.execute()
 
-    private fun updateEventToCalendar(eventId: String, event: Event) {
+    private fun updateEventToCalendar(eventId: String, event: Event?) {
         mService?.events()?.update(CALENDAR_ID, eventId, event)?.execute()
     }
 }
