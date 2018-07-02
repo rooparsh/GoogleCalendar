@@ -3,12 +3,14 @@ package com.example.rooparshkalia.googlecalendardemo
 import android.Manifest
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.api.client.extensions.android.http.AndroidHttp
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
+import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException
 import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.client.util.ExponentialBackOff
 import com.google.api.services.calendar.Calendar
@@ -19,6 +21,26 @@ import pub.devrel.easypermissions.EasyPermissions
 
 abstract class GoogleCalendarActivity : Activity(), EasyPermissions.PermissionCallbacks, GoogleCalendarView {
 
+
+    override fun requestAuthorization(e: Exception, mType: Constants.CalendarTaskType) {
+        if (e is UserRecoverableAuthIOException) {
+
+            when (mType) {
+                Constants.CalendarTaskType.INSERT -> startActivityForResult(e.intent, Constants.REQUEST_AUTHORISATION_FOR_INSERTING)
+
+                Constants.CalendarTaskType.UPDATE -> startActivityForResult(e.intent, Constants.REQUEST_AUTHORISATION_FOR_UPDATING)
+
+                Constants.CalendarTaskType.DELETE -> startActivityForResult(e.intent, Constants.REQUEST_AUTHORISATION_FOR_DELETING)
+
+                Constants.CalendarTaskType.GET -> startActivityForResult(e.intent, Constants.REQUEST_AUTHORISATION_FOR_GETTING)
+
+                Constants.CalendarTaskType.GET_ALL -> startActivityForResult(e.intent, Constants.REQUEST_AUTHORISATION_FOR_GETTING_ALL)
+            }
+
+        } else {
+            e.printStackTrace()
+        }
+    }
 
     override fun onSuccess(events: List<Event>) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
@@ -42,10 +64,10 @@ abstract class GoogleCalendarActivity : Activity(), EasyPermissions.PermissionCa
 
     companion object {
         private val CALENDAR_SCOPES = arrayListOf(CalendarScopes.CALENDAR)
-        private const val REQUEST_PERMISSION_ACCOUNT = 1000
-        private const val REQUEST_ACCOUNT_PICKER_EVENT = 1001
-        private const val REQUEST_WRITE_CALENDAR = 1003
-        private const val REQUEST_GOOGLE_PLAY_SERVICES = 1004
+        private const val REQUEST_PERMISSION_ACCOUNT = 1100
+        private const val REQUEST_ACCOUNT_PICKER_EVENT = 1101
+        private const val REQUEST_WRITE_CALENDAR = 1102
+        private const val REQUEST_GOOGLE_PLAY_SERVICES = 1103
         private const val PREF_ACCOUNT_NAME = "accountName"
     }
 
@@ -53,7 +75,7 @@ abstract class GoogleCalendarActivity : Activity(), EasyPermissions.PermissionCa
         super.onCreate(savedInstanceState)
 
 
-        mGoogleCalendarPresenter = GoogleCalendarPresenterImpl(this, GoogleCalendarInteractorImpl())
+        mGoogleCalendarPresenter = GoogleCalendarPresenterImpl(this, GoogleCalendarInteractorImpl(this))
 
         mCredential = GoogleAccountCredential.usingOAuth2(this, CALENDAR_SCOPES)
                 .setBackOff(ExponentialBackOff())
@@ -135,4 +157,16 @@ abstract class GoogleCalendarActivity : Activity(), EasyPermissions.PermissionCa
         Log.e("Easy Permission", "Permission Granted")
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (resultCode == RESULT_OK) {
+            when (requestCode) {
+                Constants.REQUEST_AUTHORISATION_FOR_INSERTING -> onGoogleCalendarClicked(Constants.CalendarTaskType.INSERT)
+                Constants.REQUEST_AUTHORISATION_FOR_DELETING -> onGoogleCalendarClicked(Constants.CalendarTaskType.DELETE)
+                Constants.REQUEST_AUTHORISATION_FOR_UPDATING -> onGoogleCalendarClicked(Constants.CalendarTaskType.UPDATE)
+                Constants.REQUEST_AUTHORISATION_FOR_GETTING -> onGoogleCalendarClicked(Constants.CalendarTaskType.GET)
+                Constants.REQUEST_AUTHORISATION_FOR_GETTING_ALL -> onGoogleCalendarClicked(Constants.CalendarTaskType.GET_ALL)
+            }
+        }
+    }
 }

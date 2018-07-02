@@ -11,17 +11,16 @@ class GoogleCalendarPresenterImpl constructor(private val mView: GoogleCalendarV
 
     override fun updateCalendar(service: Calendar, credential: GoogleAccountCredential, type: Constants.CalendarTaskType) {
         when (type) {
-            Constants.CalendarTaskType.INSERT -> {
-                mGoogleCalendarInteractorImpl.apiCallForAddingEvent(service, events = Event())
-            }
-            Constants.CalendarTaskType.UPDATE -> {
-            }
-            Constants.CalendarTaskType.DELETE -> {
-            }
-            Constants.CalendarTaskType.GET -> {
-            }
-            Constants.CalendarTaskType.GET_ALL -> {
-            }
+            Constants.CalendarTaskType.INSERT -> mGoogleCalendarInteractorImpl.apiCallForAddingEvent(service, Event())
+
+            Constants.CalendarTaskType.UPDATE -> mGoogleCalendarInteractorImpl.apiCallForAddingEvent(service, Event())
+
+            Constants.CalendarTaskType.DELETE -> mGoogleCalendarInteractorImpl.apiCallForAddingEvent(service, Event())
+
+            Constants.CalendarTaskType.GET -> mGoogleCalendarInteractorImpl.apiCallForAddingEvent(service, Event())
+
+            Constants.CalendarTaskType.GET_ALL -> mGoogleCalendarInteractorImpl.apiCallForAddingEvent(service, Event())
+
         }
     }
 

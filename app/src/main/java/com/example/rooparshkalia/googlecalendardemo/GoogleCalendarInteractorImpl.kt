@@ -4,9 +4,9 @@ import com.google.api.services.calendar.Calendar
 import com.google.api.services.calendar.model.Event
 
 
-class GoogleCalendarInteractorImpl : GoogleCalendarInteractor {
+class GoogleCalendarInteractorImpl(private val view: GoogleCalendarView) : GoogleCalendarInteractor {
     override fun apiCallForAddingEvent(service: Calendar, event: Event) {
-        CalendarTaskBackGround(service, Constants.CalendarTaskType.INSERT, event).execute()
+        CalendarTaskBackGround(service, Constants.CalendarTaskType.INSERT, event, view).execute()
     }
 
 }
