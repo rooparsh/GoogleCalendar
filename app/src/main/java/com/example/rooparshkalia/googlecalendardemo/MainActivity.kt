@@ -8,7 +8,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import com.example.rooparshkalia.googlecalendardemo.Constants.REQUEST_AUTHORISATION
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
@@ -23,7 +22,7 @@ import pub.devrel.easypermissions.EasyPermissions
 import java.util.*
 
 
-class MainActivity : Activity(), View.OnClickListener, EasyPermissions.PermissionCallbacks {
+class MainActivity : GoogleCalendarActivity(), View.OnClickListener, EasyPermissions.PermissionCallbacks {
 
     private lateinit var mCredential: GoogleAccountCredential
     private lateinit var event: Event
@@ -65,107 +64,110 @@ class MainActivity : Activity(), View.OnClickListener, EasyPermissions.Permissio
 
     override fun onClick(v: View?) {
         when (v?.id) {
-            R.id.button -> checkGooglePlayServices()
-        }
-    }
-
-    private fun checkGooglePlayServices() {
-        if (!isGooglePlayServicesAvailable()) {
-            acquirePlayServices()
-        } else {
-            requestUserAccount()
-        }
-    }
-
-    private fun acquirePlayServices() {
-        val googleApiAvailability = GoogleApiAvailability.getInstance()
-        val connectionStatusResult = googleApiAvailability.isGooglePlayServicesAvailable(this)
-
-        if (googleApiAvailability.isUserResolvableError(connectionStatusResult)) {
-            showPlayServicesAvailabilityErrorDialog(connectionStatusResult)
-        }
-    }
-
-    private fun showPlayServicesAvailabilityErrorDialog(connectionStatusResult: Int) {
-        val googleApiAvailability = GoogleApiAvailability.getInstance()
-
-        googleApiAvailability.getErrorDialog(this, connectionStatusResult, REQUEST_GOOGLE_PLAY_SERVICES).show()
-    }
-
-    private fun isGooglePlayServicesAvailable(): Boolean {
-        val googleApiAvailability = GoogleApiAvailability.getInstance()
-        return googleApiAvailability.isGooglePlayServicesAvailable(this) == ConnectionResult.SUCCESS
-    }
-
-    @AfterPermissionGranted(REQUEST_PERMISSION_ACCOUNT)
-    private fun requestUserAccount() =
-            if (EasyPermissions.hasPermissions(this@MainActivity, Manifest.permission.GET_ACCOUNTS)) {
-                val accountName = getPreferences(Context.MODE_PRIVATE).getString(PREF_ACCOUNT_NAME, null)
-
-                accountName?.let {
-                    mCredential.selectedAccountName = it
-
-                    checkCalendarAndWriteEvent()
-                }
-                        ?: startActivityForResult(mCredential.newChooseAccountIntent(), REQUEST_ACCOUNT_PICKER_EVENT)
-            } else {
-                EasyPermissions.requestPermissions(
-                        this@MainActivity,
-                        "This app needs to access your Google account",
-                        REQUEST_PERMISSION_ACCOUNT,
-                        Manifest.permission.GET_ACCOUNTS)
-            }
-
-    private fun saveUserCredentials(data: Intent) {
-        val accountName = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME)
-        accountName?.let {
-            val sharedPreferences = getPreferences(Context.MODE_PRIVATE)
-            val editor = sharedPreferences.edit()
-            editor.putString(PREF_ACCOUNT_NAME, it)
-            editor.apply()
-            mCredential.selectedAccountName = it
-            checkCalendarAndWriteEvent()
-        }
-    }
-
-    @AfterPermissionGranted(REQUEST_WRITE_CALENDAR)
-    private fun checkCalendarAndWriteEvent() {
-        if (EasyPermissions.hasPermissions(this@MainActivity, Manifest.permission.WRITE_CALENDAR)) {
-            CalendarTask(this, Constants.CalendarTaskType.INSERT, mCredential, event).execute()
-        } else {
-            EasyPermissions.requestPermissions(
-                    this@MainActivity,
-                    "This app needs to write to your calendar",
-                    REQUEST_PERMISSION_ACCOUNT,
-                    Manifest.permission.WRITE_CALENDAR)
-        }
-    }
-
-
-    override fun onPermissionsDenied(requestCode: Int, perms: MutableList<String>?) {
-        Log.e("Easy Permission", "Permission not Granted")
-    }
-
-    override fun onPermissionsGranted(requestCode: Int, perms: MutableList<String>?) {
-        Log.e("Easy Permission", "Permission Granted")
-    }
-
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this)
-    }
-
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-
-        if (resultCode == RESULT_OK) {
-            when (requestCode) {
-                REQUEST_ACCOUNT_PICKER_EVENT -> data?.let {
-                    data.extras?.let { saveUserCredentials(data) }
-                }
-                REQUEST_AUTHORISATION -> CalendarTask(this, Constants.CalendarTaskType.INSERT, mCredential, event).execute()
+            R.id.button -> {
+                //checkGooglePlayServices()
+                addEvent(event)
             }
         }
     }
+
+//    private fun checkGooglePlayServices() {
+//        if (!isGooglePlayServicesAvailable()) {
+//            acquirePlayServices()
+//        } else {
+//            requestUserAccount()
+//        }
+//    }
+//
+//    private fun acquirePlayServices() {
+//        val googleApiAvailability = GoogleApiAvailability.getInstance()
+//        val connectionStatusResult = googleApiAvailability.isGooglePlayServicesAvailable(this)
+//
+//        if (googleApiAvailability.isUserResolvableError(connectionStatusResult)) {
+//            showPlayServicesAvailabilityErrorDialog(connectionStatusResult)
+//        }
+//    }
+//
+//    private fun showPlayServicesAvailabilityErrorDialog(connectionStatusResult: Int) {
+//        val googleApiAvailability = GoogleApiAvailability.getInstance()
+//
+//        googleApiAvailability.getErrorDialog(this, connectionStatusResult, REQUEST_GOOGLE_PLAY_SERVICES).show()
+//    }
+//
+//    private fun isGooglePlayServicesAvailable(): Boolean {
+//        val googleApiAvailability = GoogleApiAvailability.getInstance()
+//        return googleApiAvailability.isGooglePlayServicesAvailable(this) == ConnectionResult.SUCCESS
+//    }
+//
+//    @AfterPermissionGranted(REQUEST_PERMISSION_ACCOUNT)
+//    private fun requestUserAccount() =
+//            if (EasyPermissions.hasPermissions(this@MainActivity, Manifest.permission.GET_ACCOUNTS)) {
+//                val accountName = getPreferences(Context.MODE_PRIVATE).getString(PREF_ACCOUNT_NAME, null)
+//
+//                accountName?.let {
+//                    mCredential.selectedAccountName = it
+//
+//                    checkCalendarAndWriteEvent()
+//                }
+//                        ?: startActivityForResult(mCredential.newChooseAccountIntent(), REQUEST_ACCOUNT_PICKER_EVENT)
+//            } else {
+//                EasyPermissions.requestPermissions(
+//                        this@MainActivity,
+//                        "This app needs to access your Google account",
+//                        REQUEST_PERMISSION_ACCOUNT,
+//                        Manifest.permission.GET_ACCOUNTS)
+//            }
+//
+//    private fun saveUserCredentials(data: Intent) {
+//        val accountName = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME)
+//        accountName?.let {
+//            val sharedPreferences = getPreferences(Context.MODE_PRIVATE)
+//            val editor = sharedPreferences.edit()
+//            editor.putString(PREF_ACCOUNT_NAME, it)
+//            editor.apply()
+//            mCredential.selectedAccountName = it
+//            checkCalendarAndWriteEvent()
+//        }
+//    }
+//
+//    @AfterPermissionGranted(REQUEST_WRITE_CALENDAR)
+//    private fun checkCalendarAndWriteEvent() {
+//        if (EasyPermissions.hasPermissions(this@MainActivity, Manifest.permission.WRITE_CALENDAR)) {
+//            CalendarTask(this, Constants.CalendarTaskType.INSERT, mCredential, event).execute()
+//        } else {
+//            EasyPermissions.requestPermissions(
+//                    this@MainActivity,
+//                    "This app needs to write to your calendar",
+//                    REQUEST_PERMISSION_ACCOUNT,
+//                    Manifest.permission.WRITE_CALENDAR)
+//        }
+//    }
+//
+//
+//    override fun onPermissionsDenied(requestCode: Int, perms: MutableList<String>?) {
+//        Log.e("Easy Permission", "Permission not Granted")
+//    }
+//
+//    override fun onPermissionsGranted(requestCode: Int, perms: MutableList<String>?) {
+//        Log.e("Easy Permission", "Permission Granted")
+//    }
+//
+//    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+//        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+//        EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this)
+//    }
+//
+//
+//    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+//        super.onActivityResult(requestCode, resultCode, data)
+//
+//        if (resultCode == RESULT_OK) {
+//            when (requestCode) {
+//                REQUEST_ACCOUNT_PICKER_EVENT -> data?.let {
+//                    data.extras?.let { saveUserCredentials(data) }
+//                }
+//                REQUEST_AUTHORISATION -> CalendarTask(this, Constants.CalendarTaskType.INSERT, mCredential, event).execute()
+//            }
+//        }
+//    }
 }

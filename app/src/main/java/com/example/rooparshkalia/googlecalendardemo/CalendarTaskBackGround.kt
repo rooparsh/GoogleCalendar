@@ -2,7 +2,6 @@ package com.example.rooparshkalia.googlecalendardemo
 
 
 import android.os.AsyncTask
-import android.util.Log
 import com.google.api.services.calendar.Calendar
 import com.google.api.services.calendar.model.Event
 import com.google.api.services.calendar.model.Events
@@ -10,11 +9,11 @@ import com.google.api.services.calendar.model.Events
 class CalendarTaskBackGround internal constructor(private val mService: Calendar,
                                                   private val mType: Constants.CalendarTaskType,
                                                   private val mEvent: Event,
-                                                  private val mView: GoogleCalendarView) : AsyncTask<Event, Unit, Unit>() {
+                                                  private val mListener: CalendarAsyncListener) : AsyncTask<Unit, Unit, Unit>() {
 
     private lateinit var mLastError: Exception
 
-    override fun doInBackground(vararg params: Event?) {
+    override fun doInBackground(vararg params: Unit?) {
         try {
             when (mType) {
                 Constants.CalendarTaskType.INSERT -> addEventToCalendar(mEvent)
@@ -30,14 +29,14 @@ class CalendarTaskBackGround internal constructor(private val mService: Calendar
     }
 
     override fun onPostExecute(result: Unit?) {
-        Log.d("Success", "added")
+        mListener.onSuccess()
         super.onPostExecute(result)
     }
 
 
     override fun onCancelled() {
         if (mLastError != null) {
-            mView.requestAuthorization(mLastError, mType)
+            mListener.onFailure(mLastError)
         }
     }
 

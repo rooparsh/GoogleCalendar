@@ -7,8 +7,6 @@ import com.google.api.services.calendar.model.Event
 
 interface GoogleCalendarPresenter {
 
-    fun onAddEvent(event: Event)
-
     fun onAttach()
 
     fun onDetach()

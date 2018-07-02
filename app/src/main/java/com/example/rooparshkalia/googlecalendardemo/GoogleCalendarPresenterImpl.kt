@@ -11,15 +11,57 @@ class GoogleCalendarPresenterImpl constructor(private val mView: GoogleCalendarV
 
     override fun updateCalendar(service: Calendar, credential: GoogleAccountCredential, type: Constants.CalendarTaskType) {
         when (type) {
-            Constants.CalendarTaskType.INSERT -> mGoogleCalendarInteractorImpl.apiCallForAddingEvent(service, Event())
+            Constants.CalendarTaskType.INSERT -> mGoogleCalendarInteractorImpl.apiCallForAddingEvent(service, Event(), object : GoogleCalendarInteractor.CallbackListener {
+                override fun onSuccess() {
+                    mView.onSuccess(listOf(Event()))
+                }
 
-            Constants.CalendarTaskType.UPDATE -> mGoogleCalendarInteractorImpl.apiCallForAddingEvent(service, Event())
+                override fun onFailure(mLastError: Exception) {
+                    mView.requestAuthorization(mLastError, type)
+                }
+            })
 
-            Constants.CalendarTaskType.DELETE -> mGoogleCalendarInteractorImpl.apiCallForAddingEvent(service, Event())
+            Constants.CalendarTaskType.UPDATE -> mGoogleCalendarInteractorImpl.apiCallForAddingEvent(service, Event(), object : GoogleCalendarInteractor.CallbackListener {
+                override fun onSuccess() {
+                    mView.onSuccess(listOf(Event()))
 
-            Constants.CalendarTaskType.GET -> mGoogleCalendarInteractorImpl.apiCallForAddingEvent(service, Event())
+                }
 
-            Constants.CalendarTaskType.GET_ALL -> mGoogleCalendarInteractorImpl.apiCallForAddingEvent(service, Event())
+                override fun onFailure(mLastError: Exception) {
+                    mView.requestAuthorization(mLastError, type)
+                }
+            })
+
+            Constants.CalendarTaskType.DELETE -> mGoogleCalendarInteractorImpl.apiCallForAddingEvent(service, Event(), object : GoogleCalendarInteractor.CallbackListener {
+                override fun onSuccess() {
+                    mView.onSuccess(listOf(Event()))
+
+                }
+
+                override fun onFailure(mLastError: Exception) {
+                    mView.requestAuthorization(mLastError, type)
+                }
+            })
+
+            Constants.CalendarTaskType.GET -> mGoogleCalendarInteractorImpl.apiCallForAddingEvent(service, Event(), object : GoogleCalendarInteractor.CallbackListener {
+                override fun onSuccess() {
+                    mView.onSuccess(listOf(Event()))
+                }
+
+                override fun onFailure(mLastError: Exception) {
+                    mView.requestAuthorization(mLastError, type)
+                }
+            })
+
+            Constants.CalendarTaskType.GET_ALL -> mGoogleCalendarInteractorImpl.apiCallForAddingEvent(service, Event(), object : GoogleCalendarInteractor.CallbackListener {
+                override fun onSuccess() {
+                    mView.onSuccess(listOf(Event()))
+                }
+
+                override fun onFailure(mLastError: Exception) {
+                    mView.requestAuthorization(mLastError, type)
+                }
+            })
 
         }
     }
@@ -52,8 +94,4 @@ class GoogleCalendarPresenterImpl constructor(private val mView: GoogleCalendarV
         mIsViewAttached = false
     }
 
-
-    override fun onAddEvent(event: Event) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
 }

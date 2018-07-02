@@ -43,7 +43,7 @@ abstract class GoogleCalendarActivity : Activity(), EasyPermissions.PermissionCa
     }
 
     override fun onSuccess(events: List<Event>) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        Log.d("SUccess", "Success")
     }
 
     override fun onGoogleServicesNotAvailable(googleApiAvailability: GoogleApiAvailability, connectionResult: Int) {
@@ -75,7 +75,7 @@ abstract class GoogleCalendarActivity : Activity(), EasyPermissions.PermissionCa
         super.onCreate(savedInstanceState)
 
 
-        mGoogleCalendarPresenter = GoogleCalendarPresenterImpl(this, GoogleCalendarInteractorImpl(this))
+        mGoogleCalendarPresenter = GoogleCalendarPresenterImpl(this, GoogleCalendarInteractorImpl())
 
         mCredential = GoogleAccountCredential.usingOAuth2(this, CALENDAR_SCOPES)
                 .setBackOff(ExponentialBackOff())
@@ -93,14 +93,14 @@ abstract class GoogleCalendarActivity : Activity(), EasyPermissions.PermissionCa
     }
 
     fun addEvent(event: Event) {
-        onGoogleCalendarClicked(Constants.CalendarTaskType.INSERT)
         this.mEvent = event
+        onGoogleCalendarClicked(Constants.CalendarTaskType.INSERT)
     }
 
     fun updateEvent(eventID: String, event: Event) {
-        onGoogleCalendarClicked(Constants.CalendarTaskType.UPDATE)
         this.mEventID = eventID
         this.mEvent = event
+        onGoogleCalendarClicked(Constants.CalendarTaskType.UPDATE)
     }
 
 
@@ -161,6 +161,7 @@ abstract class GoogleCalendarActivity : Activity(), EasyPermissions.PermissionCa
         super.onActivityResult(requestCode, resultCode, data)
         if (resultCode == RESULT_OK) {
             when (requestCode) {
+                REQUEST_ACCOUNT_PICKER_EVENT -> checkCalendarAndWriteEvent(mCredential, Constants.CalendarTaskType.INSERT)
                 Constants.REQUEST_AUTHORISATION_FOR_INSERTING -> onGoogleCalendarClicked(Constants.CalendarTaskType.INSERT)
                 Constants.REQUEST_AUTHORISATION_FOR_DELETING -> onGoogleCalendarClicked(Constants.CalendarTaskType.DELETE)
                 Constants.REQUEST_AUTHORISATION_FOR_UPDATING -> onGoogleCalendarClicked(Constants.CalendarTaskType.UPDATE)
