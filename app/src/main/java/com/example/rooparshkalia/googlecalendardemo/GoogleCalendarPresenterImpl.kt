@@ -1,18 +1,38 @@
 package com.example.rooparshkalia.googlecalendardemo
 
 import com.google.android.gms.common.GoogleApiAvailability
+import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
+import com.google.api.services.calendar.Calendar
 import com.google.api.services.calendar.model.Event
 
-class GoogleCalendarPresenterImpl(val mView: GoogleCalendarView) : GoogleCalendarPresenter {
+class GoogleCalendarPresenterImpl constructor(private val mView: GoogleCalendarView,
+                                              private val mGoogleCalendarInteractorImpl: GoogleCalendarInteractorImpl) : GoogleCalendarPresenter {
 
-    override fun checkGooglePlayServices(googleApiAvailability: GoogleApiAvailability) {
+
+    override fun updateCalendar(service: Calendar, credential: GoogleAccountCredential, type: Constants.CalendarTaskType) {
+        when (type) {
+            Constants.CalendarTaskType.INSERT -> {
+                mGoogleCalendarInteractorImpl.apiCallForAddingEvent(service, events = Event())
+            }
+            Constants.CalendarTaskType.UPDATE -> {
+            }
+            Constants.CalendarTaskType.DELETE -> {
+            }
+            Constants.CalendarTaskType.GET -> {
+            }
+            Constants.CalendarTaskType.GET_ALL -> {
+            }
+        }
+    }
+
+    override fun checkGooglePlayServices(googleApiAvailability: GoogleApiAvailability, type: Constants.CalendarTaskType) {
         if (!isGoogleServicesAvailable(googleApiAvailability)) {
             val connectionResult = acquirePlayServices(googleApiAvailability)
             if (googleApiAvailability.isUserResolvableError(connectionResult)) {
                 mView.onGoogleServicesNotAvailable(googleApiAvailability, connectionResult)
             }
         } else {
-            mView.requestUserAccount()
+            mView.requestUserAccount(type)
         }
     }
 

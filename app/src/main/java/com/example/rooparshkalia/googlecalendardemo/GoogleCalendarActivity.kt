@@ -7,8 +7,11 @@ import android.os.Bundle
 import android.util.Log
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
+import com.google.api.client.extensions.android.http.AndroidHttp
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
+import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.client.util.ExponentialBackOff
+import com.google.api.services.calendar.Calendar
 import com.google.api.services.calendar.CalendarScopes
 import com.google.api.services.calendar.model.Event
 import pub.devrel.easypermissions.AfterPermissionGranted
@@ -34,7 +37,7 @@ abstract class GoogleCalendarActivity : Activity(), EasyPermissions.PermissionCa
 
     private lateinit var mCredential: GoogleAccountCredential
     private lateinit var mEvent: Event
-    private lateinit var mEventid: String
+    private lateinit var mEventID: String
     private lateinit var mGoogleCalendarPresenter: GoogleCalendarPresenter
 
     companion object {
@@ -49,7 +52,8 @@ abstract class GoogleCalendarActivity : Activity(), EasyPermissions.PermissionCa
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        mGoogleCalendarPresenter = GoogleCalendarPresenterImpl(this)
+
+        mGoogleCalendarPresenter = GoogleCalendarPresenterImpl(this, GoogleCalendarInteractorImpl())
 
         mCredential = GoogleAccountCredential.usingOAuth2(this, CALENDAR_SCOPES)
                 .setBackOff(ExponentialBackOff())
@@ -62,31 +66,31 @@ abstract class GoogleCalendarActivity : Activity(), EasyPermissions.PermissionCa
         super.onDestroy()
     }
 
-    private fun onGoogleCalendarClicked() {
-        mGoogleCalendarPresenter.checkGooglePlayServices(GoogleApiAvailability.getInstance())
+    private fun onGoogleCalendarClicked(type: Constants.CalendarTaskType) {
+        mGoogleCalendarPresenter.checkGooglePlayServices(GoogleApiAvailability.getInstance(), type)
     }
 
     fun addEvent(event: Event) {
-        onGoogleCalendarClicked()
+        onGoogleCalendarClicked(Constants.CalendarTaskType.INSERT)
         this.mEvent = event
     }
 
-    fun updateEvent(event: Event) {
-        onGoogleCalendarClicked()
-        this.mEventid = event.id
+    fun updateEvent(eventID: String, event: Event) {
+        onGoogleCalendarClicked(Constants.CalendarTaskType.UPDATE)
+        this.mEventID = eventID
         this.mEvent = event
     }
 
 
     @AfterPermissionGranted(REQUEST_PERMISSION_ACCOUNT)
-    override fun requestUserAccount() =
+    override fun requestUserAccount(type: Constants.CalendarTaskType) =
             if (EasyPermissions.hasPermissions(this, Manifest.permission.GET_ACCOUNTS)) {
                 val accountName = getPreferences(Context.MODE_PRIVATE).getString(PREF_ACCOUNT_NAME, null)
 
+
                 accountName?.let {
                     mCredential.selectedAccountName = it
-
-                    checkCalendarAndWriteEvent()
+                    checkCalendarAndWriteEvent(mCredential, type)
                 }
                         ?: startActivityForResult(mCredential.newChooseAccountIntent(), REQUEST_ACCOUNT_PICKER_EVENT)
             } else {
@@ -98,9 +102,17 @@ abstract class GoogleCalendarActivity : Activity(), EasyPermissions.PermissionCa
             }
 
     @AfterPermissionGranted(REQUEST_WRITE_CALENDAR)
-    private fun checkCalendarAndWriteEvent() {
+    private fun checkCalendarAndWriteEvent(credential: GoogleAccountCredential, type: Constants.CalendarTaskType) {
         if (EasyPermissions.hasPermissions(this, Manifest.permission.WRITE_CALENDAR)) {
-            CalendarTask(this, Constants.CalendarTaskType.INSERT, mCredential, mEvent).execute()
+
+            val transport = AndroidHttp.newCompatibleTransport()
+            val jsonFactory = JacksonFactory.getDefaultInstance()
+            val service = Calendar.Builder(transport, jsonFactory, credential)
+                    .setApplicationName(getString(R.string.app_name))
+                    .build()
+
+            mGoogleCalendarPresenter.updateCalendar(service, credential, type)
+
         } else {
             EasyPermissions.requestPermissions(
                     this,

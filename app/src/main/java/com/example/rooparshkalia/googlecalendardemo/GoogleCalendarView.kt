@@ -13,5 +13,5 @@ interface GoogleCalendarView {
 
     fun acquireGooglePlayServices(googleApiAvailability: GoogleApiAvailability): Int
 
-    fun requestUserAccount()
+    fun requestUserAccount(type: Constants.CalendarTaskType)
 }

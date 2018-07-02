@@ -14,6 +14,7 @@ import com.google.api.services.calendar.Calendar
 import com.google.api.services.calendar.model.Event
 import com.google.api.services.calendar.model.Events
 import java.lang.ref.WeakReference
+import com.example.rooparshkalia.googlecalendardemo.Constants.CalendarTaskType.*
 
 class CalendarTask internal constructor(context: Context,
                                         type: Constants.CalendarTaskType,
@@ -24,11 +25,11 @@ class CalendarTask internal constructor(context: Context,
     override fun doInBackground(vararg params: Event?) {
         try {
             when (mType) {
-                Constants.CalendarTaskType.INSERT -> addEventToCalendar(mEvent)
-                Constants.CalendarTaskType.DELETE -> deleteEventFromCalendar("12")
-                Constants.CalendarTaskType.GET -> getEventFromCalendar("12")
-                Constants.CalendarTaskType.UPDATE -> updateEventToCalendar("12", mEvent)
-                Constants.CalendarTaskType.GET_ALL -> getAllEventsFromCalendar()
+                INSERT -> addEventToCalendar(mEvent)
+                DELETE -> deleteEventFromCalendar("12")
+                GET -> getEventFromCalendar("12")
+                UPDATE -> updateEventToCalendar("12", mEvent)
+                GET_ALL -> getAllEventsFromCalendar()
             }
         } catch (e: Exception) {
             mLastError = e
@@ -73,16 +74,13 @@ class CalendarTask internal constructor(context: Context,
 
     private fun addEventToCalendar(event: Event?): Event? = mService?.events()?.insert(CALENDAR_ID, event)?.execute()
 
-    private fun deleteEventFromCalendar(eventId: String) {
-        mService?.events()?.delete(CALENDAR_ID, eventId)?.execute()
-    }
+    private fun deleteEventFromCalendar(eventId: String) = mService?.events()?.delete(CALENDAR_ID, eventId)?.execute()
 
     private fun getEventFromCalendar(eventId: String): Event? = mService?.events()?.get(CALENDAR_ID, eventId)?.execute()
 
     private fun getAllEventsFromCalendar(): Events? = mService?.events()?.list(CALENDAR_ID)?.execute()
 
-    private fun updateEventToCalendar(eventId: String, event: Event?) {
-        mService?.events()?.update(CALENDAR_ID, eventId, event)?.execute()
-    }
+    private fun updateEventToCalendar(eventId: String, event: Event?) = mService?.events()?.update(CALENDAR_ID, eventId, event)?.execute()
+
 }
 
